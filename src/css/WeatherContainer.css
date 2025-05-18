@@ -5,3 +5,7 @@
 .weatherIcon {
     font-size: 700%;
 }
+
+#weatherContainer {
+    min-height: 100%;
+}

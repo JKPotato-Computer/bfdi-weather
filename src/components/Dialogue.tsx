@@ -3,6 +3,7 @@ import Character from "./Character";
 function Dialogue() {
   return (
     <div className="col">
+      <span className="text">(not coded yet)</span>
       <div
         className="standardComponent rounded-4 p-3 pb-5 d-flex flex-column gap-2"
         id="charDialogue"

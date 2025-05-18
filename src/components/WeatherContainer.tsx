@@ -17,22 +17,47 @@ function WeatherContainer({ settings }: WeatherContainerProps) {
   useEffect(() => {
     async function fetchData() {
       try {
-        let lat = 29.76328,
-          long = -95.36327;
+        let lat, long;
 
-        if (!navigator.geolocation) {
-          throw new Error("Geobrowser is not supported by the user.");
-        }
-
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            lat = position.coords.latitude;
-            long = position.coords.longitude;
-          },
-          () => {
-            console.warn("No position avaliable.");
+        if (settings.useCurrentLocation) {
+          if (!navigator.geolocation) {
+            throw new Error("Geobrowser is not supported by the user.");
           }
-        );
+          // Get current location (async)
+          const position: GeolocationPosition = await new Promise(
+            (resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject);
+            }
+          );
+          lat = position.coords.latitude;
+          long = position.coords.longitude;
+        } else {
+          // Use city/state or default to Washington, DC
+          let city = settings.city?.trim();
+          let state = settings.state?.trim();
+          if (!city || !state) {
+            city = "Washington";
+            state = "DC";
+          }
+          // Fetch lat/long from Nominatim
+          const nominatimUrl = `https://nominatim.openstreetmap.org/search?city=${encodeURIComponent(
+            city
+          )}&state=${encodeURIComponent(
+            state
+          )}&country=USA&format=json&limit=1`;
+          const geoResp = await fetch(nominatimUrl, {
+            headers: {
+              "Accept-Language": "en",
+              "User-Agent": "bfdi-weather-app",
+            },
+          });
+          const geoJson = await geoResp.json();
+          if (!geoJson || geoJson.length === 0) {
+            throw new Error("Could not find location for provided city/state.");
+          }
+          lat = geoJson[0].lat;
+          long = geoJson[0].lon;
+        }
 
         let response = await fetch(
             `https://api.weather.gov/points/${lat},${long}`
@@ -69,7 +94,7 @@ function WeatherContainer({ settings }: WeatherContainerProps) {
           className="container standardComponent rounded-4"
           id="weatherContainer"
         >
-          <p>Loading...</p>
+          <div className="fs-1 p-4 text-center">Loading weather...</div>
         </div>
       </div>
     );
@@ -86,7 +111,7 @@ function WeatherContainer({ settings }: WeatherContainerProps) {
           className="container standardComponent rounded-4"
           id="weatherContainer"
         >
-          <p>Unable to load data.</p>
+          <div className="fs-1 p-4 text-center">Uh oh... it failed!</div>
         </div>
       </div>
     );
@@ -135,49 +160,61 @@ function WeatherContainer({ settings }: WeatherContainerProps) {
     <div className="col d-flex flex-column gap-2">
       <TimeContainer is12Hour={settings.clock === "clock12Hr"} />
       <div
-        className="container standardComponent rounded-4"
+        className="container standardComponent rounded-4 d-flex flex-column justify-content-between"
         id="weatherContainer"
+        style={{ minHeight: "420px", height: "100%" }}
       >
-        <div className="container d-flex gap-2 flex-row align-items-center">
-          <WeatherIcon forecast={referenceValues.currently.forecast} />
-          <span className="text" id="currentTemperature">
-            {settings.degree === "degreeC"
-              ? referenceValues.currently.degree === "F"
-                ? Math.round(
-                    ((referenceValues.currently.temperature - 32) * 5) / 9
-                  )
-                : referenceValues.currently.temperature
-              : referenceValues.currently.degree === "F"
-              ? referenceValues.currently.temperature
-              : Math.round(
-                  (referenceValues.currently.temperature * 9) / 5 + 32
-                )}
-          </span>
-          <span className="fs-1 text mb-5" id="tempDegree">
-            °{settings.degree === "degreeC" ? "C" : "F"}
-          </span>
-          <span className="ms-auto fs-3 mb-5">
-            {referenceValues.currently.forecast}
-          </span>
+        <div>
+          <div className="container d-flex gap-2 flex-row align-items-center">
+            <WeatherIcon forecast={referenceValues.currently.forecast} />
+            <span className="text" id="currentTemperature">
+              {settings.degree === "degreeC"
+                ? referenceValues.currently.degree === "F"
+                  ? Math.round(
+                      ((referenceValues.currently.temperature - 32) * 5) / 9
+                    )
+                  : referenceValues.currently.temperature
+                : referenceValues.currently.degree === "F"
+                ? referenceValues.currently.temperature
+                : Math.round(
+                    (referenceValues.currently.temperature * 9) / 5 + 32
+                  )}
+            </span>
+            <span className="fs-1 text mb-5" id="tempDegree">
+              °{settings.degree === "degreeC" ? "C" : "F"}
+            </span>
+            <span className="ms-auto fs-4 mb-5 text-end lh-s">
+              {referenceValues.currently.forecast}
+            </span>
+          </div>
+          <div className="container d-flex flex-column justify-content-left">
+            <span className="fs-3 text lh-sm">
+              Precipitation: {referenceValues.currently.precipitation}%
+            </span>
+            <span className="fs-3 text lh-sm">
+              Humidity: {referenceValues.currently.humidity}%
+            </span>
+            <span className="fs-3 text lh-sm">
+              Wind: {referenceValues.currently.windSpeed}
+            </span>
+          </div>
+          <TempChart
+            periods={referenceValues.periods}
+            is12Hour={settings.clock == "clock12Hr"}
+          />
         </div>
-        <div className="container d-flex flex-column justify-content-left">
-          <span className="fs-3 text lh-sm">
-            Precipitation: {referenceValues.currently.precipitation}%
-          </span>
-          <span className="fs-3 text lh-sm">
-            Humidity: {referenceValues.currently.humidity}%
-          </span>
-          <span className="fs-3 text lh-sm">
-            Wind: {referenceValues.currently.windSpeed}
-          </span>
-        </div>
-        <TempChart
-          periods={referenceValues.periods}
-          is12Hour={settings.clock == "clock12Hr"}
-        />
-        <div className="container d-flex flex-row justify-content-between align-items-center p-2 mt-0">
+        <div
+          className="container d-flex flex-row justify-content-between align-items-center p-2 mt-0"
+          style={{ marginTop: "auto" }}
+        >
           <span className="text">
-            Source: National Weather Service (
+            <span
+              style={{ backgroundColor: "rgb(128, 128, 64)" }}
+              className="px-4 py-1 rounded-4 text text-center me-2"
+            >
+              WIP
+            </span>
+            National Weather Service (
             {currentStandardData.properties.relativeLocation.properties.city},{" "}
             {currentStandardData.properties.relativeLocation.properties.state})
             -

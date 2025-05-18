@@ -1,21 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Dialogue from "./components/Dialogue";
 import NavBar from "./components/NavBar";
 import Settings from "./components/Settings";
 import WeatherContainer from "./components/WeatherContainer";
-// Import the SettingsData type or interface from the correct file
 import type { SettingsData } from "./components/Settings";
 
 function App() {
   const [settings, setSettings] = useState<SettingsData | null>({
-    location: null,
+    city: "",
+    state: "",
+    useCurrentLocation: true,
     clock: "clock12Hr",
     degree: "degreeF",
   });
 
+  useEffect(() => {
+    const saved = localStorage.getItem("settings");
+    if (saved) {
+      setSettings(JSON.parse(saved));
+    }
+  }, []);
+
+  const updateSettings = (newSettings: SettingsData) => {
+    setSettings(newSettings);
+    localStorage.setItem("settings", JSON.stringify(newSettings));
+  };
+
   return (
     <>
-      <Settings setSettings={setSettings} currentSettings={settings} />
+      <Settings setSettings={updateSettings} currentSettings={settings} />
       <NavBar
         onSettingsClick={() => {
           const settingsModal = document.querySelector(
@@ -27,9 +40,12 @@ function App() {
       />
       <div className="row gap-1">
         <WeatherContainer
+          key={JSON.stringify(settings)}
           settings={
             settings ?? {
-              location: null,
+              city: "",
+              state: "",
+              useCurrentLocation: true,
               clock: "clock12Hr",
               degree: "degreeF",
             }
