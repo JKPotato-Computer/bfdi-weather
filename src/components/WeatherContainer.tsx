@@ -174,7 +174,7 @@ function WeatherContainer({ settings }: WeatherContainerProps) {
             stateAbbr = stateMap[reverseJson.address.state] || "";
           }
           if (
-            countryCode == "US" ||
+            countryCode !== "US" ||
             (stateAbbr && !SUPPORTED.includes(stateAbbr))
           ) {
             setUnsupportedLocation(true);
