@@ -21,9 +21,16 @@ function App() {
     }
   }, []);
 
-  const updateSettings = (newSettings: SettingsData) => {
-    setSettings(newSettings);
-    localStorage.setItem("settings", JSON.stringify(newSettings));
+  const updateSettings: React.Dispatch<
+    React.SetStateAction<SettingsData | null>
+  > = (value) => {
+    setSettings((prev) => {
+      const newSettings = typeof value === "function" ? value(prev) : value;
+      if (newSettings) {
+        localStorage.setItem("settings", JSON.stringify(newSettings));
+      }
+      return newSettings;
+    });
   };
 
   return (
