@@ -44,8 +44,6 @@ function WeatherContainer({ settings }: WeatherContainerProps) {
           });
           const reverseJson = await reverseResp.json();
           const countryCode = reverseJson.address?.country_code?.toUpperCase();
-          const stateCode =
-            reverseJson.address?.state || reverseJson.address?.region || "";
           // List of supported US states/territories (same as in Settings)
           const SUPPORTED = [
             "AL",
