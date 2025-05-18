@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+@font-face {
+    font-family: 'Shag-Lounge';
+    src: url('../assets/fonts/Shag-Lounge.woff2') format('woff2'),
+        url('../assets/fonts/Shag-Lounge.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root[data-theme="light"] {
+  --text: rgb(8, 17, 22);
+  --background: rgb(236, 248, 249);
+  --primary: rgb(33, 90, 120);
+  --secondary: rgb(83, 174, 50);
+  --accent: rgb(170, 172, 27);
+}
+:root[data-theme="dark"] {
+  --text: rgb(233, 242, 247);
+  --background: rgb(6, 18, 19);
+  --primary: rgb(135, 192, 222);
+  --secondary: rgb(114, 205, 81);
+  --accent: rgb(226, 228, 83);
+}
+
+:root {
+  --headerColor: #008cff;
+}
+
+html {
+    background: #C7F6FE;
+}
+
+body {
+  font-family: 'Roboto';
+  font-weight: 400;
+  padding: 2.5% 7.5%;
+  background: radial-gradient(circle, rgba(199, 246, 254, 1) 0%, rgba(165, 241, 254, 1) 100%);
+  position: absolute;
+  height: max-content;
+  min-height: 100vh;
+  width: 100%;
+  overflow: auto;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: 'Shag-Lounge';
+  font-weight: 700;
+}
+
+html {font-size: 100%;} /* 16px */
+
+h1 {font-size: 4.210rem; /* 67.36px */}
+
+h2 {font-size: 3.158rem; /* 50.56px */}
+
+h3 {font-size: 2.369rem; /* 37.92px */}
+
+h4 {font-size: 1.777rem; /* 28.48px */}
+
+h5 {font-size: 1.333rem; /* 21.28px */}
+
+small {font-size: 0.750rem; /* 12px */}
+
+
+.iconBtn {
+  line-height: 0;
+  aspect-ratio: 1 / 1;
+}
+
+.standardComponent, .standardButton {
+  background-color: rgb(0, 0, 0, .5);
+  color: white;
+}

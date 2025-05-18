@@ -1,0 +1,9 @@
+#titleBrand {
+    background-color: var(--headerColor);
+    border: 4px solid white;
+    color: white;
+}
+
+#titleBrand > span {
+    font-family: 'Shag-Lounge';
+}
