@@ -13,11 +13,13 @@ function WeatherContainer({ settings }: WeatherContainerProps) {
   const [currentStandardData, setStandardData] = useState<any>(null);
   const [currentWeatherData, setWeatherData] = useState<any>(null);
   const [refresh, setRefresh] = useState(false);
+  const [unsupportedLocation, setUnsupportedLocation] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
       try {
         let lat, long;
+        setUnsupportedLocation(false);
 
         if (settings.useCurrentLocation) {
           if (!navigator.geolocation) {
@@ -31,6 +33,156 @@ function WeatherContainer({ settings }: WeatherContainerProps) {
           );
           lat = position.coords.latitude;
           long = position.coords.longitude;
+
+          // Reverse geocode to check country and state/territory
+          const reverseUrl = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${long}&format=json&zoom=5&addressdetails=1`;
+          const reverseResp = await fetch(reverseUrl, {
+            headers: {
+              "Accept-Language": "en",
+              "User-Agent": "bfdi-weather-app",
+            },
+          });
+          const reverseJson = await reverseResp.json();
+          const countryCode = reverseJson.address?.country_code?.toUpperCase();
+          const stateCode =
+            reverseJson.address?.state || reverseJson.address?.region || "";
+          // List of supported US states/territories (same as in Settings)
+          const SUPPORTED = [
+            "AL",
+            "AK",
+            "AZ",
+            "AR",
+            "CA",
+            "CO",
+            "CT",
+            "DE",
+            "FL",
+            "GA",
+            "HI",
+            "ID",
+            "IL",
+            "IN",
+            "IA",
+            "KS",
+            "KY",
+            "LA",
+            "ME",
+            "MD",
+            "MA",
+            "MI",
+            "MN",
+            "MS",
+            "MO",
+            "MT",
+            "NE",
+            "NV",
+            "NH",
+            "NJ",
+            "NM",
+            "NY",
+            "NC",
+            "ND",
+            "OH",
+            "OK",
+            "OR",
+            "PA",
+            "RI",
+            "SC",
+            "SD",
+            "TN",
+            "TX",
+            "UT",
+            "VT",
+            "VA",
+            "WA",
+            "WV",
+            "WI",
+            "WY",
+            "AS",
+            "DC",
+            "FM",
+            "GU",
+            "MH",
+            "MP",
+            "PR",
+            "PW",
+            "VI",
+          ];
+          // Try to get state/territory abbreviation from address
+          let stateAbbr = reverseJson.address?.state_code?.toUpperCase();
+          if (!stateAbbr && reverseJson.address?.state) {
+            // fallback: try to match full state name to abbreviation
+            const stateMap: Record<string, string> = {
+              Alabama: "AL",
+              Alaska: "AK",
+              Arizona: "AZ",
+              Arkansas: "AR",
+              California: "CA",
+              Colorado: "CO",
+              Connecticut: "CT",
+              Delaware: "DE",
+              Florida: "FL",
+              Georgia: "GA",
+              Hawaii: "HI",
+              Idaho: "ID",
+              Illinois: "IL",
+              Indiana: "IN",
+              Iowa: "IA",
+              Kansas: "KS",
+              Kentucky: "KY",
+              Louisiana: "LA",
+              Maine: "ME",
+              Maryland: "MD",
+              Massachusetts: "MA",
+              Michigan: "MI",
+              Minnesota: "MN",
+              Mississippi: "MS",
+              Missouri: "MO",
+              Montana: "MT",
+              Nebraska: "NE",
+              Nevada: "NV",
+              "New Hampshire": "NH",
+              "New Jersey": "NJ",
+              "New Mexico": "NM",
+              "New York": "NY",
+              "North Carolina": "NC",
+              "North Dakota": "ND",
+              Ohio: "OH",
+              Oklahoma: "OK",
+              Oregon: "OR",
+              Pennsylvania: "PA",
+              "Rhode Island": "RI",
+              "South Carolina": "SC",
+              "South Dakota": "SD",
+              Tennessee: "TN",
+              Texas: "TX",
+              Utah: "UT",
+              Vermont: "VT",
+              Virginia: "VA",
+              Washington: "WA",
+              "West Virginia": "WV",
+              Wisconsin: "WI",
+              Wyoming: "WY",
+              "District of Columbia": "DC",
+              "American Samoa": "AS",
+              Guam: "GU",
+              "Northern Mariana Islands": "MP",
+              "Puerto Rico": "PR",
+              "U.S. Virgin Islands": "VI",
+              Palau: "PW",
+              "Marshall Islands": "MH",
+              "Federated States of Micronesia": "FM",
+            };
+            stateAbbr = stateMap[reverseJson.address.state] || "";
+          }
+          if (
+            countryCode == "US" ||
+            (stateAbbr && !SUPPORTED.includes(stateAbbr))
+          ) {
+            setUnsupportedLocation(true);
+            setLoading(false);
+            return;
+          }
         } else {
           // Use city/state or default to Washington, DC
           let city = settings.city?.trim();
@@ -111,7 +263,29 @@ function WeatherContainer({ settings }: WeatherContainerProps) {
           className="container standardComponent rounded-4"
           id="weatherContainer"
         >
-          <div className="fs-1 p-4 text-center">Uh oh... it failed!</div>
+          <div className="fs-1 pt-2 text-center">uh oh... it failed.</div>
+          {unsupportedLocation && (
+            <>
+              <span className="text">
+                <b>error: </b> current location unsupported! :(
+              </span>
+              <ul className="text-start fs-5">
+                <li>
+                  this site uses the National Weather Service API, which only
+                  provides weather data for the United States and its
+                  territories
+                </li>
+                <li>
+                  your current location appears to be outside of these supported
+                  areas
+                </li>
+                <li>
+                  please select a US city and state in the settings to view
+                  weather information
+                </li>
+              </ul>
+            </>
+          )}
         </div>
       </div>
     );
