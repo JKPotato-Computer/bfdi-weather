@@ -20,16 +20,50 @@ function TempChart({ periods, is12Hour }: TempChartProps) {
       let backgroundColor: CanvasPattern | undefined = undefined;
       if (ctx) {
         const stripeCanvas = document.createElement("canvas");
-        stripeCanvas.width = 20;
-        stripeCanvas.height = 20;
+        let scale = 0.75;
+
+        stripeCanvas.width = 40 * scale;
+        stripeCanvas.height = 40 * scale;
         const stripeCtx = stripeCanvas.getContext("2d");
         if (stripeCtx) {
           // Fill left half transparent (default)
-          // Fill right half with semi-transparent white
+          // Fill right half with semi-transparent
+
           stripeCtx.fillStyle = "rgba(255,255,255,0.25)";
-          stripeCtx.fillRect(10, 0, 10, 20);
+          stripeCtx.moveTo(0, 0);
+          stripeCtx.beginPath();
+          stripeCtx.lineTo(20 * scale, 0);
+          stripeCtx.lineTo(0, 20 * scale);
+          stripeCtx.lineTo(0, 0);
+          stripeCtx.closePath();
+          stripeCtx.fill();
+
+          stripeCtx.moveTo(0, 40 * scale);
+          stripeCtx.beginPath();
+          stripeCtx.lineTo(40 * scale, 0);
+          stripeCtx.lineTo(40 * scale, 20 * scale);
+          stripeCtx.lineTo(20 * scale, 40 * scale);
+          stripeCtx.lineTo(0, 40 * scale);
+          stripeCtx.closePath();
+          stripeCtx.fill();
+
           stripeCtx.fillStyle = "rgba(0,0,0,0.25)";
-          stripeCtx.fillRect(0, 0, 10, 20);
+          stripeCtx.moveTo(40 * scale, 40 * scale);
+          stripeCtx.beginPath();
+          stripeCtx.lineTo(20 * scale, 40 * scale);
+          stripeCtx.lineTo(40 * scale, 20 * scale);
+          stripeCtx.lineTo(40 * scale, 40 * scale);
+          stripeCtx.closePath();
+          stripeCtx.fill();
+
+          stripeCtx.moveTo(0, 40 * scale);
+          stripeCtx.beginPath();
+          stripeCtx.lineTo(40 * scale, 0);
+          stripeCtx.lineTo(20 * scale, 0);
+          stripeCtx.lineTo(0, 20 * scale);
+          stripeCtx.lineTo(0, 40 * scale);
+          stripeCtx.closePath();
+          stripeCtx.fill();
         }
         backgroundColor =
           ctx.createPattern(stripeCanvas, "repeat") || undefined;
@@ -106,7 +140,7 @@ function TempChart({ periods, is12Hour }: TempChartProps) {
               },
             },
             y: {
-              min: Math.min(...periods.map((val) => val.temperature)),
+              min: Math.min(...periods.map((val) => val.temperature)) - 1,
               max: Math.max(...periods.map((val) => val.temperature)) + 5,
               grid: {
                 display: false,

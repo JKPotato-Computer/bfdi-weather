@@ -119,7 +119,7 @@ function Settings({ setSettings, currentSettings }: SettingsProps) {
             </h1>
           </div>
           <div className="modal-body">
-            <form ref={formRef}>
+            <form ref={formRef} onSubmit={(e) => e.preventDefault()}>
               <div className="mb-3">
                 <label htmlFor="city" className="form-label">
                   City

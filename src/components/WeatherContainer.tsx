@@ -275,11 +275,7 @@ function WeatherContainer({ settings }: WeatherContainerProps) {
                 </li>
                 <li>
                   your current location appears to be outside of these supported
-                  areas
-                </li>
-                <li>
-                  please select a US city and state in the settings to view
-                  weather information
+                  areas so... rip ig
                 </li>
               </ul>
             </>
