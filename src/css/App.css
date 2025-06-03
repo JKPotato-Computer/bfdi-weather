@@ -26,17 +26,21 @@
 
 :root {
   --headerColor: #008cff;
+  --daytime: radial-gradient(circle, rgba(199, 246, 254, 1) 0%, rgba(165, 241, 254, 1) 100%);
+  --nighttime: radial-gradient(circle,rgba(0, 12, 31, 1) 0%, rgb(0, 28, 64) 100%);
+  --daycolor: rgba(199, 246, 254, 1);
+  --nightcolor: #000c1f;
 }
 
 html {
-    background: #C7F6FE;
+  background: black;
 }
 
 body {
   font-family: 'Roboto';
   font-weight: 400;
   padding: 2.5% 7.5%;
-  background: radial-gradient(circle, rgba(199, 246, 254, 1) 0%, rgba(165, 241, 254, 1) 100%);
+  background: black;
   position: absolute;
   height: max-content;
   min-height: 100vh;
@@ -63,7 +67,6 @@ h5 {font-size: 1.333rem; /* 21.28px */}
 
 small {font-size: 0.750rem; /* 12px */}
 
-
 .iconBtn {
   line-height: 0;
   aspect-ratio: 1 / 1;
@@ -72,4 +75,8 @@ small {font-size: 0.750rem; /* 12px */}
 .standardComponent, .standardButton {
   background-color: rgb(0, 0, 0, .5);
   color: white;
+}
+
+body.dark .standardComponent, body.dark .standardButton {
+  background-color: rgb(255, 255, 255, .15);
 }

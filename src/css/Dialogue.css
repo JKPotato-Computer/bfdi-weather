@@ -1,3 +1,11 @@
+.dialogueHolder {
+    position: relative;
+}
+
 #charDialogue span, #charDialogue p {
     font-family: 'Shag-Lounge';
+}
+
+#charDialogue * {
+    font-size: 5vh;
 }

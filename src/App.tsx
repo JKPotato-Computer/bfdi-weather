@@ -13,6 +13,7 @@ function App() {
     clock: "clock12Hr",
     degree: "degreeF",
   });
+  const [forecast, setForecast] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const saved = localStorage.getItem("settings");
@@ -57,8 +58,9 @@ function App() {
               degree: "degreeF",
             }
           }
+          onForecastUpdate={setForecast}
         />
-        <Dialogue />
+        <Dialogue forecast={forecast} />
       </div>
     </>
   );

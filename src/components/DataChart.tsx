@@ -5,11 +5,12 @@ import ChartDataLabels from "chartjs-plugin-datalabels";
 Chart.register(ChartDataLabels);
 
 interface TempChartProps {
-  periods: { temperature: any; time: any }[];
+  periods: { temperature: any; time: any; humidity: any; precipitation: any }[];
   is12Hour: boolean;
+  chartDataType: "temperature" | "humidity" | "precipitation";
 }
 
-function TempChart({ periods, is12Hour }: TempChartProps) {
+function DataChart({ periods, is12Hour, chartDataType }: TempChartProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   useEffect(() => {
     let chartInstance: Chart | null = null;
@@ -26,44 +27,55 @@ function TempChart({ periods, is12Hour }: TempChartProps) {
         stripeCanvas.height = 40 * scale;
         const stripeCtx = stripeCanvas.getContext("2d");
         if (stripeCtx) {
-          // Fill left half transparent (default)
-          // Fill right half with semi-transparent
-
-          stripeCtx.fillStyle = "rgba(255,255,255,0.25)";
-          stripeCtx.moveTo(0, 0);
-          stripeCtx.beginPath();
-          stripeCtx.lineTo(20 * scale, 0);
-          stripeCtx.lineTo(0, 20 * scale);
-          stripeCtx.lineTo(0, 0);
-          stripeCtx.closePath();
-          stripeCtx.fill();
-
-          stripeCtx.moveTo(0, 40 * scale);
-          stripeCtx.beginPath();
-          stripeCtx.lineTo(40 * scale, 0);
-          stripeCtx.lineTo(40 * scale, 20 * scale);
-          stripeCtx.lineTo(20 * scale, 40 * scale);
-          stripeCtx.lineTo(0, 40 * scale);
-          stripeCtx.closePath();
-          stripeCtx.fill();
-
-          stripeCtx.fillStyle = "rgba(0,0,0,0.25)";
-          stripeCtx.moveTo(40 * scale, 40 * scale);
-          stripeCtx.beginPath();
-          stripeCtx.lineTo(20 * scale, 40 * scale);
-          stripeCtx.lineTo(40 * scale, 20 * scale);
-          stripeCtx.lineTo(40 * scale, 40 * scale);
-          stripeCtx.closePath();
-          stripeCtx.fill();
-
-          stripeCtx.moveTo(0, 40 * scale);
-          stripeCtx.beginPath();
-          stripeCtx.lineTo(40 * scale, 0);
-          stripeCtx.lineTo(20 * scale, 0);
-          stripeCtx.lineTo(0, 20 * scale);
-          stripeCtx.lineTo(0, 40 * scale);
-          stripeCtx.closePath();
-          stripeCtx.fill();
+          // Define polygons and their fill styles
+          const polygons = [
+            {
+              fillStyle: document.body.classList.contains("dark")
+                ? "rgba(255,255,255,0.5)"
+                : "rgba(0,0,0,0.25)",
+              points: [
+                [
+                  [0, 0],
+                  [20 * scale, 0],
+                  [0, 20 * scale],
+                ],
+                [
+                  [0, 40 * scale],
+                  [40 * scale, 0],
+                  [40 * scale, 20 * scale],
+                  [20 * scale, 40 * scale],
+                ],
+              ],
+            },
+            {
+              fillStyle: document.body.classList.contains("dark")
+                ? "rgba(255,255,255,0.25)"
+                : "rgba(0,0,0,0.5)",
+              points: [
+                [
+                  [40 * scale, 40 * scale],
+                  [20 * scale, 40 * scale],
+                  [40 * scale, 20 * scale],
+                ],
+                [
+                  [0, 40 * scale],
+                  [40 * scale, 0],
+                  [20 * scale, 0],
+                  [0, 20 * scale],
+                ],
+              ],
+            },
+          ];
+          polygons.forEach(({ fillStyle, points }) => {
+            stripeCtx.fillStyle = fillStyle;
+            points.forEach((poly) => {
+              stripeCtx.beginPath();
+              stripeCtx.moveTo(poly[0][0], poly[0][1]);
+              poly.slice(1).forEach(([x, y]) => stripeCtx.lineTo(x, y));
+              stripeCtx.closePath();
+              stripeCtx.fill();
+            });
+          });
         }
         backgroundColor =
           ctx.createPattern(stripeCanvas, "repeat") || undefined;
@@ -86,7 +98,7 @@ function TempChart({ periods, is12Hour }: TempChartProps) {
           datasets: [
             {
               label: "",
-              data: periods.map((val) => val.temperature),
+              data: periods.map((val) => val[chartDataType]),
               fill: true,
               backgroundColor,
               borderColor: "rgb(255, 255, 255)",
@@ -108,7 +120,11 @@ function TempChart({ periods, is12Hour }: TempChartProps) {
                 family: "Roboto, Arial, sans-serif",
                 size: 24,
               },
-              formatter: (value: number) => value,
+              formatter: (value: number) =>
+                value +
+                (chartDataType == "humidity" || chartDataType == "precipitation"
+                  ? "%"
+                  : ""),
               display: true,
             },
             legend: {
@@ -140,8 +156,11 @@ function TempChart({ periods, is12Hour }: TempChartProps) {
               },
             },
             y: {
-              min: Math.min(...periods.map((val) => val.temperature)) - 1,
-              max: Math.max(...periods.map((val) => val.temperature)) + 5,
+              min: Math.max(
+                Math.min(...periods.map((val) => val[chartDataType])) - 1,
+                chartDataType != "temperature" ? 0 : Number.MIN_SAFE_INTEGER
+              ),
+              max: Math.max(...periods.map((val) => val[chartDataType])) + 5,
               grid: {
                 display: false,
               },
@@ -172,4 +191,4 @@ function TempChart({ periods, is12Hour }: TempChartProps) {
   return <canvas id="tempChart" ref={canvasRef}></canvas>;
 }
 
-export default TempChart;
+export default DataChart;

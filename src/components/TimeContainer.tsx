@@ -11,6 +11,17 @@ function TimeContainer({ is12Hour }: TimeContainerProps) {
       setCurrentTime(new Date());
     }, 1000);
 
+    const body = document.body;
+    const hours = currentTime.getHours();
+    body.style.background =
+      hours >= 18 || hours < 6 ? "var(--nighttime)" : "var(--daytime)";
+    body.className = hours >= 18 || hours < 6 ? "dark" : "light";
+    const htmlElement = document.querySelector("html");
+    if (htmlElement) {
+      htmlElement.style.background =
+        hours >= 18 || hours < 6 ? "var(--nightcolor)" : "var(--daycolor)";
+    }
+
     return () => clearInterval(intervalId);
   }, []);
 
