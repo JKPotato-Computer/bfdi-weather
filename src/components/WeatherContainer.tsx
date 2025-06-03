@@ -5,7 +5,6 @@ import TimeContainer from "./TimeContainer";
 import type { SettingsData } from "./Settings";
 import type { WeatherData } from "./weatherApi";
 import { fetchWeatherData, readWeatherData } from "./weatherApi";
-import Dialogue from "./Dialogue";
 
 interface WeatherContainerProps {
   settings: SettingsData;
