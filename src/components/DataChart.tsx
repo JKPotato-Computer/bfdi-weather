@@ -10,95 +10,112 @@ interface TempChartProps {
   chartDataType: "temperature" | "humidity" | "precipitation";
 }
 
+// Helper to draw the stripe pattern on a canvas
+const drawStripePattern = (stripeCanvas: HTMLCanvasElement, scale: number) => {
+  const stripeCtx = stripeCanvas.getContext("2d");
+  if (stripeCtx) {
+    const polygons = [
+      {
+        fillStyle: document.body.classList.contains("dark")
+          ? "rgba(255,255,255,0.5)"
+          : "rgba(0,0,0,0.25)",
+        points: [
+          [
+            [0, 0],
+            [20 * scale, 0],
+            [0, 20 * scale],
+          ],
+          [
+            [0, 40 * scale],
+            [40 * scale, 0],
+            [40 * scale, 20 * scale],
+            [20 * scale, 40 * scale],
+          ],
+        ],
+      },
+      {
+        fillStyle: document.body.classList.contains("dark")
+          ? "rgba(255,255,255,0.25)"
+          : "rgba(0,0,0,0.5)",
+        points: [
+          [
+            [40 * scale, 40 * scale],
+            [20 * scale, 40 * scale],
+            [40 * scale, 20 * scale],
+          ],
+          [
+            [0, 40 * scale],
+            [40 * scale, 0],
+            [20 * scale, 0],
+            [0, 20 * scale],
+          ],
+        ],
+      },
+    ];
+    polygons.forEach(({ fillStyle, points }) => {
+      stripeCtx.fillStyle = fillStyle;
+      points.forEach((poly) => {
+        stripeCtx.beginPath();
+        stripeCtx.moveTo(poly[0][0], poly[0][1]);
+        poly.slice(1).forEach(([x, y]) => stripeCtx.lineTo(x, y));
+        stripeCtx.closePath();
+        stripeCtx.fill();
+      });
+    });
+  }
+  return stripeCanvas;
+};
+
+// Returns a CanvasPattern for the chart background
+const getStripePattern = (ctx: CanvasRenderingContext2D, scale: number) => {
+  const stripeCanvas = document.createElement("canvas");
+  stripeCanvas.width = 40 * scale;
+  stripeCanvas.height = 40 * scale;
+  drawStripePattern(stripeCanvas, scale);
+  return ctx.createPattern(stripeCanvas, "repeat") || undefined;
+};
+
 function DataChart({ periods, is12Hour, chartDataType }: TempChartProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
   useEffect(() => {
     let chartInstance: Chart | null = null;
 
     if (canvasRef.current) {
-      // Create a repeating striped pattern
       const ctx = canvasRef.current.getContext("2d");
       let backgroundColor: CanvasPattern | undefined = undefined;
       if (ctx) {
-        const stripeCanvas = document.createElement("canvas");
-        let scale = 0.75;
-
-        stripeCanvas.width = 40 * scale;
-        stripeCanvas.height = 40 * scale;
-        const stripeCtx = stripeCanvas.getContext("2d");
-        if (stripeCtx) {
-          // Define polygons and their fill styles
-          const polygons = [
-            {
-              fillStyle: document.body.classList.contains("dark")
-                ? "rgba(255,255,255,0.5)"
-                : "rgba(0,0,0,0.25)",
-              points: [
-                [
-                  [0, 0],
-                  [20 * scale, 0],
-                  [0, 20 * scale],
-                ],
-                [
-                  [0, 40 * scale],
-                  [40 * scale, 0],
-                  [40 * scale, 20 * scale],
-                  [20 * scale, 40 * scale],
-                ],
-              ],
-            },
-            {
-              fillStyle: document.body.classList.contains("dark")
-                ? "rgba(255,255,255,0.25)"
-                : "rgba(0,0,0,0.5)",
-              points: [
-                [
-                  [40 * scale, 40 * scale],
-                  [20 * scale, 40 * scale],
-                  [40 * scale, 20 * scale],
-                ],
-                [
-                  [0, 40 * scale],
-                  [40 * scale, 0],
-                  [20 * scale, 0],
-                  [0, 20 * scale],
-                ],
-              ],
-            },
-          ];
-          polygons.forEach(({ fillStyle, points }) => {
-            stripeCtx.fillStyle = fillStyle;
-            points.forEach((poly) => {
-              stripeCtx.beginPath();
-              stripeCtx.moveTo(poly[0][0], poly[0][1]);
-              poly.slice(1).forEach(([x, y]) => stripeCtx.lineTo(x, y));
-              stripeCtx.closePath();
-              stripeCtx.fill();
-            });
-          });
-        }
-        backgroundColor =
-          ctx.createPattern(stripeCanvas, "repeat") || undefined;
+        backgroundColor = getStripePattern(ctx, 0.75);
       }
 
       chartInstance = new Chart(canvasRef.current, {
         type: "line",
         data: {
-          labels: periods.map((val) =>
-            new Date(val.time)
+          labels: periods.map((val, idx) => {
+            let time = new Date(val.time)
               .toLocaleTimeString("en-us", {
                 hour: "2-digit",
                 minute: "2-digit",
-                hour12: is12Hour, // Use 12-hour clock
+                hour12: is12Hour,
               })
               .replace(/(AM|PM)$/, "")
               .replace(/^0/, "")
-              .trim()
-          ),
+              .trim();
+            // If window width <= 600, clear every odd index label
+            if (window.innerWidth <= 600 && idx % 2 === 1) {
+              return "";
+            }
+            return time;
+          }),
           datasets: [
             {
               label: "",
-              data: periods.map((val) => val[chartDataType]),
+              data: periods.map((val) => {
+                if (chartDataType === "temperature") return val.temperature;
+                if (chartDataType === "humidity") return val.humidity;
+                if (chartDataType === "precipitation") return val.precipitation;
+                return null;
+              }),
               fill: true,
               backgroundColor,
               borderColor: "rgb(255, 255, 255)",
@@ -120,11 +137,19 @@ function DataChart({ periods, is12Hour, chartDataType }: TempChartProps) {
                 family: "Roboto, Arial, sans-serif",
                 size: 24,
               },
-              formatter: (value: number) =>
-                value +
-                (chartDataType == "humidity" || chartDataType == "precipitation"
-                  ? "%"
-                  : ""),
+              formatter: (value: number, context: any) => {
+                // If window width <= 600 and odd index, clear label
+                if (window.innerWidth <= 600 && context.dataIndex % 2 === 1) {
+                  return "";
+                }
+                let point =
+                  value +
+                  (chartDataType == "humidity" ||
+                  chartDataType == "precipitation"
+                    ? "%"
+                    : "");
+                return point;
+              },
               display: true,
             },
             legend: {
@@ -149,6 +174,11 @@ function DataChart({ periods, is12Hour, chartDataType }: TempChartProps) {
                 font: {
                   family: "Roboto, Arial, sans-serif",
                   size: 20,
+                },
+                callback: function (val, index) {
+                  return window.innerWidth > 600 || index % 2 === 0
+                    ? this.getLabelForValue(Number(val))
+                    : "";
                 },
               },
               border: {
@@ -186,7 +216,7 @@ function DataChart({ periods, is12Hour, chartDataType }: TempChartProps) {
         chartInstance.destroy();
       }
     };
-  }, [periods]);
+  }, [periods, chartDataType, is12Hour]);
 
   return <canvas id="tempChart" ref={canvasRef}></canvas>;
 }

@@ -4,7 +4,11 @@ import DataChart from "./DataChart";
 import TimeContainer from "./TimeContainer";
 import type { SettingsData } from "./Settings";
 import type { WeatherData } from "./weatherApi";
-import { fetchWeatherData, readWeatherData } from "./weatherApi";
+import {
+  fetchWeatherData,
+  readWeatherData,
+  getLastUpdatedTime,
+} from "./weatherApi";
 
 interface WeatherContainerProps {
   settings: SettingsData;
@@ -19,38 +23,49 @@ function WeatherContainer({
   const [currentStandardData, setStandardData] = useState<any>(null);
   const [currentWeatherData, setWeatherData] = useState<any>(null);
   const [refresh, setRefresh] = useState(false);
-  const [unsupportedLocation, setUnsupportedLocation] = useState(false);
+  const [errorReason, setErrorReason] = useState(undefined);
   const [chartDataType, setChartDataType] = useState<
     "temperature" | "humidity" | "precipitation"
   >("temperature");
-  // Add a state for the processed weather data
+  const [referenceValues, setReferenceValues] = useState<WeatherData | null>(
+    null
+  );
 
   useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const { currentStandardData, currentWeatherData, unsupportedLocation } =
+      const [newStandardData, newWeatherData, newErrorReason] =
         await fetchWeatherData(settings);
-      setStandardData(currentStandardData);
-      setWeatherData(currentWeatherData);
-      setUnsupportedLocation(unsupportedLocation);
+      setStandardData(newStandardData);
+      setWeatherData(newWeatherData);
+      setErrorReason(newErrorReason);
+
+      // Await readWeatherData since it returns a Promise
+      let refVals: WeatherData | null = null;
+      if (newWeatherData) {
+        try {
+          refVals = await readWeatherData(newWeatherData, settings);
+        } catch (e) {
+          refVals = null;
+        }
+      }
+
+      setReferenceValues(refVals);
       setLoading(false);
 
       // Notify Dialogue of forecast update
-      if (onForecastUpdate && currentWeatherData) {
-        const referenceValues: WeatherData = readWeatherData(
-          currentWeatherData,
-          settings
-        );
-        onForecastUpdate(referenceValues.currently.forecast);
+      if (onForecastUpdate && refVals) {
+        onForecastUpdate(refVals.currently.forecast);
       }
     }
     loadData();
   }, [refresh, settings]);
 
-  if (loading) {
+  // Helper for loading UI
+  function LoadingUI({ is12Hour }: { is12Hour: boolean }) {
     return (
-      <div className="col d-flex flex-column gap-3">
-        <TimeContainer is12Hour={settings.clock === "clock12Hr"} />
+      <div className="col d-flex flex-column gap-3" id="timeWeatherHolder">
+        <TimeContainer is12Hour={is12Hour} />
         <div
           className="container standardComponent rounded-4"
           id="weatherContainer"
@@ -61,48 +76,93 @@ function WeatherContainer({
     );
   }
 
-  if (
-    currentWeatherData === null ||
-    (currentWeatherData != null && Object.keys(currentWeatherData).length === 0)
-  ) {
+  // Helper for error UI
+  function ErrorUI({
+    is12Hour,
+    errorReason,
+    onRefresh,
+  }: {
+    is12Hour: boolean;
+    errorReason: any;
+    onRefresh: () => void;
+  }) {
     return (
-      <div className="col d-flex flex-column gap-3">
-        <TimeContainer is12Hour={settings.clock === "clock12Hr"} />
+      <div
+        className="col d-flex flex-column align-items-start gap-3"
+        id="timeWeatherHolder"
+      >
+        <TimeContainer is12Hour={is12Hour} />
         <div
-          className="container standardComponent rounded-4"
+          className="container standardComponent rounded-4 p-4"
           id="weatherContainer"
         >
-          <div className="fs-1 pt-2 text-center">uh oh... it failed.</div>
-          {unsupportedLocation && (
-            <>
-              <span className="text">
-                <b>error: </b> current location unsupported! :(
-              </span>
-              <ul className="text-start fs-5">
-                <li>
-                  this site uses the National Weather Service API, which only
-                  provides weather data for the United States and its
-                  territories
-                </li>
-                <li>
-                  your current location appears to be outside of these supported
-                  areas so... rip ig
-                </li>
-              </ul>
-            </>
+          <div className="alert alert-danger" role="alert">
+            <div className="row">
+              <div className="col flex-grow-1 d-flex flex-row align-items-center gap-2">
+                <span className="material-symbols-rounded fs-3">error</span>
+                <span className="fs-3">
+                  <b>uh oh!</b> it failed...
+                </span>
+              </div>
+              <div className="col">
+                <button
+                  type="button"
+                  className="btn btn-primary d-flex align-items-center gap-3 ms-auto"
+                  onClick={onRefresh}
+                >
+                  <span className="material-symbols-rounded">refresh</span>{" "}
+                  Refresh
+                </button>
+              </div>
+            </div>
+            <div className="row">
+              <hr className="m-2" />
+              <span>reason: {errorReason}</span>
+            </div>
+          </div>
+
+          {errorReason === "UnsupportedLocation" && (
+            <ul className="text-start fs-6">
+              <li>
+                this site uses the National Weather Service API, which only
+                provides weather data for the United States and its territories
+              </li>
+              <li>
+                your current location appears to be outside of these supported
+                areas so... rip ig
+              </li>
+            </ul>
           )}
         </div>
       </div>
     );
   }
 
-  const referenceValues: WeatherData = readWeatherData(
-    currentWeatherData,
-    settings
-  );
+  if (loading) {
+    return <LoadingUI is12Hour={settings.clock === "clock12Hr"} />;
+  }
+
+  if (
+    currentWeatherData == null ||
+    (currentWeatherData != null &&
+      Object.keys(currentWeatherData).length === 0) ||
+    errorReason == undefined
+  ) {
+    return (
+      <ErrorUI
+        is12Hour={settings.clock === "clock12Hr"}
+        errorReason={errorReason}
+        onRefresh={() => setRefresh(!refresh)}
+      />
+    );
+  }
+
+  if (!referenceValues) {
+    return <LoadingUI is12Hour={settings.clock === "clock12Hr"} />;
+  }
 
   return (
-    <div className="col d-flex flex-column gap-3">
+    <div className="col d-flex flex-column gap-3" id="timeWeatherHolder">
       <TimeContainer is12Hour={settings.clock === "clock12Hr"} />
       <div
         className="container standardComponent rounded-4 d-flex flex-column justify-content-between"
@@ -128,7 +188,10 @@ function WeatherContainer({
             <span className="fs-1 text mb-5" id="tempDegree">
               °{settings.degree === "degreeC" ? "C" : "F"}
             </span>
-            <span className="ms-auto fs-4 mb-5 text-end lh-s">
+            <span
+              className="ms-auto fs-4 mb-5 text-end lh-s"
+              id="smallForecast"
+            >
               {referenceValues.currently.forecast}
             </span>
           </div>
@@ -144,7 +207,7 @@ function WeatherContainer({
             </span>
           </div>
 
-          <div className="btn-group mt-3">
+          <div className="btn-group mt-3" id="chartTypeSelector">
             <a
               href="#"
               className={
@@ -194,18 +257,12 @@ function WeatherContainer({
           style={{ marginTop: "auto" }}
         >
           <span className="text">
-            <span
-              style={{ backgroundColor: "rgb(128, 128, 64)" }}
-              className="px-4 py-1 rounded-4 text text-center me-2"
-            >
-              WIP
-            </span>
-            National Weather Service (
+            Source: National Weather Service (
             {currentStandardData.properties.relativeLocation.properties.city},{" "}
             {currentStandardData.properties.relativeLocation.properties.state})
             -
             {" " +
-              new Date().toLocaleTimeString("en-us", {
+              new Date(getLastUpdatedTime()).toLocaleTimeString("en-us", {
                 hour12: settings.clock === "clock12Hr",
               })}
           </span>
@@ -213,7 +270,6 @@ function WeatherContainer({
             type="button"
             className="btn btn-primary d-flex align-items-center gap-3"
             onClick={() => {
-              console.log("Refreshing");
               setRefresh(!refresh);
             }}
           >

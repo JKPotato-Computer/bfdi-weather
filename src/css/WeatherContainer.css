@@ -9,3 +9,38 @@
 #weatherContainer {
     min-height: 100%;
 }
+
+#timeWeatherHolder {
+    position: relative;
+    padding-right: 37.5%;
+}
+
+#chartTypeSelector {
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-wrap: wrap;
+}
+
+@media screen and (max-width: 900px) {
+    #currentTemperature {
+        font-size: 300%;
+    }
+
+    .weatherIcon {
+        font-size: 350%;
+    }
+
+    #tempDegree {
+        margin-bottom: 1rem !important;
+        margin-left: -1rem;
+    }
+
+    #smallForecast {
+        margin-bottom: 1rem !important;
+    }
+
+    #timeWeatherHolder {
+        padding-right: 0;
+    }
+}

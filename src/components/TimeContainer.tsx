@@ -49,4 +49,8 @@ function TimeContainer({ is12Hour }: TimeContainerProps) {
   );
 }
 
+export function getCurrentTime(): Date {
+  return new Date();
+}
+
 export default TimeContainer;

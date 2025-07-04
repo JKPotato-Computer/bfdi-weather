@@ -1,9 +1,15 @@
+import { getCurrentTime } from "./TimeContainer.tsx";
+import "../css/WeatherIcon.css";
+
 interface WeatherIconProps {
   forecast: string;
 }
 
 function getIconName(forecast: string): string {
   const f = forecast.toLowerCase();
+  let isEvening =
+    getCurrentTime().getHours() >= 18 || getCurrentTime().getHours() < 6;
+
   if (f.includes("thunderstorm") || f.includes("t-storm"))
     return "thunderstorm";
   if (f.includes("snow") || f.includes("flurries") || f.includes("blizzard"))
@@ -20,8 +26,11 @@ function getIconName(forecast: string): string {
     f.includes("partly cloudy") ||
     f.includes("mostly sunny")
   )
-    return "partly_cloudy_day";
-  if (f.includes("sunny") || f.includes("clear")) return "clear_day";
+    return isEvening
+      ? "partly_cloudy_night yellow"
+      : "partly_cloudy_day yellow";
+  if (f.includes("sunny") || f.includes("clear"))
+    return isEvening ? "bedtime yellow" : "clear_day yellow";
   if (f.includes("wind")) return "air";
   return "help"; // fallback icon
 }
@@ -30,7 +39,7 @@ function WeatherIcon({ forecast }: WeatherIconProps) {
   const iconName = getIconName(forecast);
   return (
     <span className={"weatherIcon material-symbols-rounded " + iconName}>
-      {iconName}
+      {iconName.split(" ")[0]}
     </span>
   );
 }

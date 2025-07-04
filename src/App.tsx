@@ -14,6 +14,7 @@ function App() {
     degree: "degreeF",
   });
   const [forecast, setForecast] = useState<string | undefined>(undefined);
+  const [refreshDialogue, setRefreshDialogue] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("settings");
@@ -46,7 +47,7 @@ function App() {
           settingsModal.style.display = "block";
         }}
       />
-      <div className="row gap-1">
+      <div className="row gap-3">
         <WeatherContainer
           key={JSON.stringify(settings)}
           settings={
@@ -58,9 +59,16 @@ function App() {
               degree: "degreeF",
             }
           }
-          onForecastUpdate={setForecast}
+          onForecastUpdate={(newForecast) => {
+            setForecast(newForecast);
+            setRefreshDialogue((r) => !r);
+          }}
         />
-        <Dialogue forecast={forecast} />
+        <Dialogue
+          forecast={forecast}
+          refreshDialogue={refreshDialogue}
+          onRefresh={() => setRefreshDialogue((r) => !r)}
+        />
       </div>
     </>
   );
