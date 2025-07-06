@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import WeatherIcon from "./WeatherIcon";
 import DataChart from "./DataChart";
 import TimeContainer from "./TimeContainer";
@@ -31,6 +31,9 @@ function WeatherContainer({
     null
   );
 
+  const lastForecastRef = useRef<string | null>(null);
+  const prevLoadingRef = useRef<boolean>(true);
+
   useEffect(() => {
     async function loadData() {
       setLoading(true);
@@ -40,7 +43,6 @@ function WeatherContainer({
       setWeatherData(newWeatherData);
       setErrorReason(newErrorReason);
 
-      // Await readWeatherData since it returns a Promise
       let refVals: WeatherData | null = null;
       if (newWeatherData) {
         try {
@@ -52,14 +54,24 @@ function WeatherContainer({
 
       setReferenceValues(refVals);
       setLoading(false);
-
-      // Notify Dialogue of forecast update
-      if (onForecastUpdate && refVals) {
-        onForecastUpdate(refVals.currently.forecast);
-      }
     }
     loadData();
   }, [refresh, settings]);
+
+  // Only notify Dialogue if forecast actually changed and loading is done
+  useEffect(() => {
+    // Only run when loading transitions from true to false
+    if (
+      onForecastUpdate &&
+      referenceValues &&
+      prevLoadingRef.current && // was loading before
+      !loading // now not loading
+    ) {
+      lastForecastRef.current = referenceValues.currently.forecast;
+      onForecastUpdate(referenceValues.currently.forecast);
+    }
+    prevLoadingRef.current = loading;
+  }, [loading, referenceValues, onForecastUpdate]);
 
   // Helper for loading UI
   function LoadingUI({ is12Hour }: { is12Hour: boolean }) {

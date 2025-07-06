@@ -28,8 +28,12 @@
   --headerColor: #008cff;
   --daytime: radial-gradient(circle, rgba(199, 246, 254, 1) 0%, rgba(165, 241, 254, 1) 100%);
   --nighttime: radial-gradient(circle,rgba(0, 12, 31, 1) 0%, rgb(0, 28, 64) 100%);
+  --stormtime: radial-gradient(circle, #3a4856 0%, #1e232a 100%);
+  --snowytime: radial-gradient(circle, #eaf6fb 0%, #b5d0e6 100%);
   --daycolor: rgba(199, 246, 254, 1);
   --nightcolor: #000c1f;
+  --stormcolor: #232b33;
+  --snowycolor: #eaf6fb;
 }
 
 html {

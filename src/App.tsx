@@ -4,6 +4,7 @@ import NavBar from "./components/NavBar";
 import Settings from "./components/Settings";
 import WeatherContainer from "./components/WeatherContainer";
 import type { SettingsData } from "./components/Settings";
+import { forecastToDialogueCategory } from "./components/CharacterDialogues";
 
 function App() {
   const [settings, setSettings] = useState<SettingsData | null>({
@@ -22,6 +23,44 @@ function App() {
       setSettings(JSON.parse(saved));
     }
   }, []);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      const currentTime = new Date();
+      const body = document.body;
+      const htmlElement = document.querySelector("html");
+      let category = forecastToDialogueCategory(forecast ?? "", currentTime);
+
+      // Determine if it's night (8pm to 6am)
+      const hour = currentTime.getHours();
+      const isNight = hour >= 20 || hour < 6;
+
+      if (
+        category === "raining" ||
+        category === "foggy" ||
+        category === "windy"
+      ) {
+        // Treat raining/foggy/windy as stormy
+        body.style.background = "var(--stormtime)";
+        if (htmlElement) htmlElement.style.background = "var(--stormcolor)";
+        body.className = "storm";
+      } else if (category === "snowy") {
+        body.style.background = "var(--snowytime)";
+        if (htmlElement) htmlElement.style.background = "var(--snowycolor)";
+        body.className = "snowy";
+      } else if (isNight) {
+        body.style.background = "var(--nighttime)";
+        if (htmlElement) htmlElement.style.background = "var(--nightcolor)";
+        body.className = "dark";
+      } else {
+        body.style.background = "var(--daytime)";
+        if (htmlElement) htmlElement.style.background = "var(--daycolor)";
+        body.className = "light";
+      }
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [forecast]);
 
   const updateSettings: React.Dispatch<
     React.SetStateAction<SettingsData | null>
@@ -49,7 +88,6 @@ function App() {
       />
       <div className="row gap-3">
         <WeatherContainer
-          key={JSON.stringify(settings)}
           settings={
             settings ?? {
               city: "",

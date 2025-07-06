@@ -109,7 +109,14 @@ function Settings({ setSettings, currentSettings }: SettingsProps) {
     >
       <div className="modal-dialog-centered modal-dialog modal-lg">
         <div className="modal-content">
-          <div className="modal-header">
+          <div
+            className="modal-header"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <h1
               className="modal-title fs-5"
               style={{ fontWeight: "normal" }}
@@ -117,6 +124,15 @@ function Settings({ setSettings, currentSettings }: SettingsProps) {
             >
               Settings
             </h1>
+            <a
+              href="https://github.com/JKPotato-Computer/bfdi-weather"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline-dark"
+              style={{ marginLeft: "auto", cursor: "pointer" }}
+            >
+              Open on GitHub
+            </a>
           </div>
           <div className="modal-body">
             <form ref={formRef} onSubmit={(e) => e.preventDefault()}>
@@ -310,15 +326,22 @@ function Settings({ setSettings, currentSettings }: SettingsProps) {
               <a href="https://www.chartjs.org/" target="_blank">
                 chart.js
               </a>
-              )
-              <br />
-              Originally from{" "}
+              ) - Originally from{" "}
               <a
                 href="https://x.com/FurretWalk/status/1921695916399993045"
                 target="_blank"
               >
                 this post
               </a>
+              <br />
+              Images sourced from{" "}
+              <a
+                href="https://battlefordreamisland.fandom.com/wiki/Battle_for_Dream_Island_Wiki"
+                target="_blank"
+              >
+                BFDI Fandom
+              </a>{" "}
+              - all assets belong to jacknjellify!
             </span>
             <button
               type="button"

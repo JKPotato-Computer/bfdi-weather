@@ -1,15 +1,20 @@
 #character {
     position: fixed;
-    height: 70vh;
-    bottom: -10%;
-    right: -6.25%;
+    width: 20vh;
+    bottom: 0;
+    right: 6.25%;
     transform: translateX(-50%);
+    scale: var(--scaleValue);
+}
+
+#character.flip {
+    transform: scaleX(-1);
 }
 
 @media screen and (max-width: 900px) {
     #character {
         position: static;
-        height: 35vh;
+        width: 30vh;
         transform: none;
     }
 }
