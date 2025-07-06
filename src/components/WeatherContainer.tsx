@@ -145,6 +145,15 @@ function WeatherContainer({
               </li>
             </ul>
           )}
+
+          {errorReason === "GeolocationDenied" && (
+            <div className="alert alert-warning mt-3" role="alert">
+              <span>
+                you denied location access. either enable location permissions
+                or enter your city and state manually in <b>settings</b>.
+              </span>
+            </div>
+          )}
         </div>
       </div>
     );

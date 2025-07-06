@@ -133,22 +133,42 @@ const verifyLocation = async (lat: number, long: number) => {
   );
 };
 
-const getLatLongFromCurrentLocation = async () => {
+const getLatLongFromCurrentLocation = async (settings?: SettingsData) => {
   if (!navigator.geolocation) {
     throw new Error("GeobrowserUnsupported");
   }
 
-  const position: GeolocationPosition = await new Promise((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(resolve, reject);
-  });
+  try {
+    const position: GeolocationPosition = await new Promise(
+      (resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      }
+    );
 
-  let lat = position.coords.latitude;
-  let long = position.coords.longitude;
+    let lat = position.coords.latitude;
+    let long = position.coords.longitude;
 
-  if (!(await verifyLocation(lat, long))) {
-    throw new Error("UnsupportedLocation");
-  } else {
-    return [lat, long];
+    if (!(await verifyLocation(lat, long))) {
+      throw new Error("UnsupportedLocation");
+    } else {
+      return [lat, long];
+    }
+  } catch (err: any) {
+    // If geolocation denied and manual city/state is available, fallback
+    if (
+      settings &&
+      settings.city &&
+      settings.state &&
+      settings.city.trim() !== "" &&
+      settings.state.trim() !== ""
+    ) {
+      return getLatLongFromGivenLocation(
+        settings.city.trim(),
+        settings.state.trim()
+      );
+    }
+    // Otherwise, propagate the error
+    throw new Error("GeolocationDenied");
   }
 };
 
@@ -189,7 +209,7 @@ export async function fetchWeatherData(settings: SettingsData) {
   try {
     let lat: string | number, long: string | number;
     if (settings.useCurrentLocation) {
-      [lat, long] = await getLatLongFromCurrentLocation();
+      [lat, long] = await getLatLongFromCurrentLocation(settings);
     } else {
       [lat, long] = await getLatLongFromGivenLocation(
         settings.city?.trim() || "Washington",
@@ -205,7 +225,11 @@ export async function fetchWeatherData(settings: SettingsData) {
       currentStandardData.properties.forecastHourly
     );
   } catch (errorReason) {
-    return [currentStandardData, currentWeatherData, errorReason];
+    return [
+      currentStandardData,
+      currentWeatherData,
+      errorReason instanceof Error ? errorReason.message : String(errorReason),
+    ];
   }
   return [currentStandardData, currentWeatherData, "UnsupportedLocation"];
 }
