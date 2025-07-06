@@ -322,11 +322,7 @@ function Settings({ setSettings, currentSettings }: SettingsProps) {
               <a href="https://linktr.ee/jkpotato_computer" target="_blank">
                 JK_Potato / Computer
               </a>{" "}
-              (Uses{" "}
-              <a href="https://www.chartjs.org/" target="_blank">
-                chart.js
-              </a>
-              ) - Originally from{" "}
+              - Originally from{" "}
               <a
                 href="https://x.com/FurretWalk/status/1921695916399993045"
                 target="_blank"

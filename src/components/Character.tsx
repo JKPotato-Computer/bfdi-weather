@@ -13,7 +13,11 @@ function Character({ image, scale, classProperties, styles }: CharacterProps) {
   }
 
   styles = styles && Object.keys(styles).length === 0 ? {} : { ...styles };
-  styles["--scaleValue"] = scale;
+  if (window.innerWidth <= 900) {
+    styles["--scaleValue"] = 1;
+  } else {
+    styles["--scaleValue"] = scale;
+  }
 
   return (
     <img
