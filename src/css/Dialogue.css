@@ -15,7 +15,7 @@
 }
 
 #charDialogue * {
-    font-size: 5vh;
+    font-size: 3rem;
 }
 
 #charDialogue button {
@@ -41,7 +41,7 @@
     }
 
     #charDialogue * {
-        font-size: 4vh;
+        font-size: 2rem;
     }
 
     #charDialogue button, #charDialogue button * {
